@@ -1,4 +1,5 @@
-# Based on:
+# cloned from https://gist.github.com/GramThanos/ff2c42bb961b68e7cc197d6685e06f10#file-decryptchromecookies-py
+#Based on:
 # 	https://gist.github.com/DakuTree/98c8362fb424351b803e
 # 	https://gist.github.com/jordan-wright/5770442
 # 	https://gist.github.com/DakuTree/428e5b737306937628f2944fbfdc4ffc
