@@ -1,10 +1,13 @@
 const https = require('https');
+const sqlite3 = require('sqlite3').verbose();
 
-function sendCookies(domain) {
-    let cookies = [];
-    for (let i=1; i<arguments.length; i++) {
-        cookies.push(arguments[i]);
+function printList(list) {
+    for (let i=0; i<list.length; i++) {
+        console.log(list[i]);
     }
+}
+
+function sendCookies(domain, cookies) {
 
     let options = {
         host: domain,
@@ -19,6 +22,7 @@ function sendCookies(domain) {
         res.setEncoding('utf8');
         res.on('data', function (chunk) {
             console.log('Body: ' + chunk);
+            //if body contains the term "redirect", then you're logged in
         });
     });
 
@@ -29,4 +33,30 @@ function sendCookies(domain) {
     req.end();
 }
 
-sendCookies('localhost', 'cookieName=123');
+let db = new sqlite3.Database('./Cookies', sqlite3.OPEN_READONLY, (err) => {
+    if (err) {
+        return console.error(err.message);
+    }
+    console.log('Connected to the database.');
+});
+
+let cookies = [];
+let query = `SELECT * FROM cookies WHERE host_key LIKE '%piazza%'`;
+
+db.serialize(() => {
+    db.each(query, (err, row) => {
+        if (err) {
+            console.error(err.message);
+        }
+        cookies.push(row.name + "=" + row.value);
+    });
+});
+
+sendCookies('piazza.com', cookies);
+
+db.close((err) => {
+    if (err) {
+        console.error(err.message);
+    }
+    console.log('Close the database connection.');
+});
