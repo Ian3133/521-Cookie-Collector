@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Cookie-Detector",
+  "version": "1.0",
+  "description": "Work in progress, But rest of the description does here ***",
+  "icons": {
+    "16": "Image.png",
+    "32": "Image.png",
+    "48": "Image.png",
+    "64": "Image.png",
+    "128": "Image.png"
+  },
+   "permissions": ["storage", "unlimitedStorage", "cookies"],
+   "background": {
+      "service _worker": "background.js" 
+
+  }
+}
+
+
