@@ -12,7 +12,7 @@
   },
    "permissions": ["storage", "unlimitedStorage", "cookies"],
    "background": {
-      "service _worker": "Testcookie.js" 
+      "service _worker": "testcookie.js" 
 
   }
 }
