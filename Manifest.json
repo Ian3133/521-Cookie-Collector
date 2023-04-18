@@ -10,10 +10,14 @@
     "64": "Image.png",
     "128": "Image.png"
   },
+  "action": {
+    "default_popup": "hi.html",
+    "default_icon": "hi.png"
+  },
+  "host_permissions": ["<all_urls>"],
    "permissions": ["storage", "unlimitedStorage", "cookies"],
    "background": {
-      "service _worker": "background.js" 
-
+    "service _worker": "background.js" 
   }
 }
 
