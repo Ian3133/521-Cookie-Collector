@@ -40,8 +40,8 @@ conn.text_factory = bytes
 cursor = conn.cursor()
 
 # Get the results
-cursor.execute('SELECT host_key, name, value, encrypted_value FROM cookies')
-for host_key, name, value, encrypted_value in cursor.fetchall():
+cursor.execute('SELECT host_key, name, value, encrypted_value, expires_utc FROM cookies')
+for host_key, name, value, encrypted_value, expires_utc in cursor.fetchall():
     # Decrypt the encrypted_value
     try:
         # Try to decrypt as AES (2020 method)
@@ -54,14 +54,15 @@ for host_key, name, value, encrypted_value in cursor.fetchall():
     decrypted_value = decrypted_value.decode('utf-8')
     host_key = host_key.decode('utf-8')
     name = name.decode('utf-8')
+    expires = expires_utc
 
     # Update the cookies with the decrypted value
     # This also makes all session cookies persistent
     cursor.execute('\
-        UPDATE cookies SET value = ?, has_expires = 1, expires_utc = 99999999999999999, is_persistent = 1, is_secure = 0\
+        UPDATE cookies SET value = ?, has_expires = 1, expires_utc = ?, is_persistent = 1, is_secure = 0\
         WHERE host_key = ?\
         AND name = ?',
-        (decrypted_value, host_key, name))
+        (decrypted_value, expires_utc, host_key, name))
 
 conn.commit()
 conn.close()
