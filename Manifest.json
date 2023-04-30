@@ -3,6 +3,11 @@
   "name": "Cookie-Detector",
   "version": "1.0",
   "description": "Work in progress, But rest of the description does here ***",
+  "page_action": {
+    "default_icon": "icon.png",
+    "default_popup": "popup.html",
+    "default_title": "Run Python Script"
+  },
   "icons": {
     "16": "Image.png",
     "32": "Image.png",
@@ -10,7 +15,8 @@
     "64": "Image.png",
     "128": "Image.png"
   },
-   "permissions": ["storage", "unlimitedStorage", "cookies"],
+   "permissions": ["storage", "unlimitedStorage", "cookies", "permissions",
+    "activeTab"],
    "background": {
       "service _worker": "testcookie.js" 
 
