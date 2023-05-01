@@ -7,19 +7,7 @@ import time
 #gets a smaller site list so we don't test lots of random sites
 def GetSiteList() -> 'list[str]':
     siteList = [
-        "facebook",
-        "reddit",
-        "piazza",
-        #"bu.edu",
-        "twitter",
-        #"google",
-        #"gmail",
-        "stackoverflow",
-        #".gov",
-        #".org",
-        "geeksforgeeks",
-        "gradescope",
-        "github",
+        "openai"
     ]
     return siteList
 def CreateCookiesForSession(cursor:sqlite3.Cursor, host_key:str) -> "list[dict]":
@@ -72,12 +60,10 @@ if __name__ == '__main__':
             print(cookie)
             print('*'*120)
 
-def GetDomainList(short:bool=True) -> 'list[str]':
+def GetDomainList(sites:'list[str]') -> 'list[str]':
     # Connect to the Database
     conn = sqlite3.connect('./Cookies')
     cursor = conn.cursor()
-
-    shortList = GetSiteList()
 
     cursor.execute('SELECT host_key FROM cookies')
     domains = []
@@ -95,9 +81,14 @@ def GetDomainList(short:bool=True) -> 'list[str]':
         if key[0] != ".":
             key = "." + key
 
+        # group similar domains into one 'cookie group'
+        # as in, only take the toplevel name, not lower ones
+
+        key = key[key.rfind('.', 0, key.rfind('.')):]
+
         if key not in domains:
-            if short:
-                for site in shortList:
+            if len(sites) > 0:
+                for site in sites:
                     if site in key:
                         domains.append(key)
                         break

@@ -120,8 +120,22 @@ def InjectCookiesToDomain(domain:str, automatic:bool=False, vulnList:'list[str]'
     return
 
 # returns a list of vulnerable websites
-def InjectAllAutomatic(short:bool=True) -> 'list[str]':
-    domains = getCookies.GetDomainList(short=short)
+def InjectAllAutomatic(short:bool=True, file:str=None) -> 'list[str]':
+    domains = []
+    sites = []
+    if file == None:
+        sites = []
+        if short:
+            sites = getCookies.GetSiteList()
+    else:
+        with open(file, 'r') as f:
+            line = f.readline()
+            while line:
+                site = line.strip()
+                sites.append(site)
+                line = f.readline()
+
+    domains = getCookies.GetDomainList(sites)
 
     vulnList = []
     threads = []
@@ -146,16 +160,23 @@ def InjectAllAutomatic(short:bool=True) -> 'list[str]':
     return vulnList
 
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
+    if len(sys.argv) < 2:
         site = input("Domain you want to visit as <example.com>\n>")
         InjectCookiesToDomain(site)
     else:
+        vuln = []
+        printVuln = True
         if sys.argv[1] == 'all':
             vuln = InjectAllAutomatic(short = False)
             print(f"Vulnerable: {vuln}")
         elif sys.argv[1] == 'some':
             vuln = InjectAllAutomatic(short = True)
             print(f"Vulnerable: {vuln}")
+        elif sys.argv[1] == 'file':
+            assert len(sys.argv) >= 3
+            vuln = InjectAllAutomatic(file=sys.argv[2])
         else:
+            printVuln = False
             InjectCookiesToDomain(sys.argv[1])
+        print("Vulnerable Sites: \n" + '\n'.join(vuln))
 
