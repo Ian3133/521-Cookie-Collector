@@ -10,16 +10,16 @@ def GetSiteList() -> 'list[str]':
         "facebook",
         "reddit",
         "piazza",
-        "bu.edu",
+        #"bu.edu",
         "twitter",
         #"google",
         #"gmail",
         "stackoverflow",
-        #"microsoft",
         #".gov",
         #".org",
         "geeksforgeeks",
-        "openai"
+        "gradescope",
+        "github",
     ]
     return siteList
 def CreateCookiesForSession(cursor:sqlite3.Cursor, host_key:str) -> "list[dict]":

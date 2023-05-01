@@ -1,82 +1,125 @@
+from io import StringIO
 import subprocess
 import sys
 import os
 import time
 import threading
 from selenium import webdriver  # pip install Selenium
+from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import WebDriverException
 import getCookies
+
+import validators
 
 # returns True the title changed after injection
 def InjectCookiesToDomain(domain:str, automatic:bool=False, vulnList:'list[str]' = []):
     # URL to open in new window, assume https and .com
     cookies = getCookies.GetCookies(domain)
 
+    vulnerable = False
+
+    if len(cookies) == 0:
+        print(f"No Cookies for: {domain}")
+        return
+
     if domain[0] != ".":
         domain = "." + domain
 
     url = f"https://www{domain}"
+    validUrl = validators.url(url)
+    if validUrl == False:
+        print(f"Invalid URL: {url}")
+        return
 
-    # only test the website if we have at least 3 cookies
-    if len(cookies) > 3:
-        print(f"Testing URL: {url}")
-        javascriptCode = \
-        f"""
-        cookieStr = '{cookies}';
-        cookieArr = JSON.parse(cookieStr);
-        cookieArr.forEach((item) => {{
-            document.cookie = item;
-        }})
-        """
+    print(f"Testing URL: {url}")
+    javascriptCode = \
+    f"""
+    cookieStr = '{cookies}';
+    cookieArr = JSON.parse(cookieStr);
+    cookieArr.forEach((item) => {{
+        document.cookie = item;
+    }})
+    """
+    if automatic == False:
+        print("JS code that will be injected: ")
+        print(javascriptCode)
+        print("*"*64)
 
-        driver = webdriver.Chrome()
-        driver.set_window_position(100,-1000)
-        driver.implicitly_wait(1)
+    chromeOptions = Options()
+    if automatic:
+        chromeOptions.add_argument("--headless")
 
-        try:
-            driver.get(url)
-        except WebDriverException:
-            print("Failed to connect on URL: " + url)
-            driver.quit()
-            return
+    chromeOptions.add_argument('--log-level=3')
+    # open chrome
+    driver = webdriver.Chrome(options=chromeOptions)
+    driver.set_window_position(100,-1000)
+    driver.implicitly_wait(1)
 
-
-
-        titleBeforeInjection = driver.title
-
-        if (automatic == False):
-            #wait for input to inject cookies
-            input("Press enter to inject cookies\n")
-
-        try:
-            driver.execute_script(javascriptCode)
-            driver.refresh()
-        except WebDriverException:
-            print("Exception when executing script: " + url)
-            print(f"Script: \n{javascriptCode}")
-            driver.quit()
-            return
-
-        titleAfterInjection = driver.title
-
-        # if the title changed, the website is vulnerable
-        if titleBeforeInjection != titleAfterInjection:
-            print(f"{url} -- potentially vulnerable")
-            vulnList.append(url)
-        else:
-            print(f"{url} -- probably safe")
-
-        if automatic == False:
-            #wait for input before closing
-            input("Press enter to close browser\n")
-
+    # go to url
+    try:
+        driver.get(url)
+    except WebDriverException:
+        print("Failed to connect on URL: " + url)
+        driver.close()
         driver.quit()
-    else:
-        print(f"Less than 3 cookies for: {url}")
+        return
 
+    titleBeforeInjection = driver.title
+
+    pageHtml = str(driver.page_source)
+    pageHtml = pageHtml.lower()
+
+    if (automatic == False):
+        #wait for input to inject cookies
+        input("Press enter to inject cookies\n")
+
+    try:
+        driver.execute_script(javascriptCode)
+        driver.refresh()
+    except WebDriverException:
+        print("Exception when executing script: " + url)
+        print(f"Script: \n{javascriptCode}")
+        driver.close()
+        driver.quit()
+        return
+
+
+
+    # if there was an option to login and now there isn't, assume we logged in
+    newPageHtml = str(driver.page_source)
+    newPageHtml = newPageHtml.lower()
+
+    loginStrs = ["signup", "sign up", "login", "log in"]
+    for login in loginStrs:
+        if login in pageHtml and login not in newPageHtml:
+            if url not in vulnList:
+                vulnList.append(url)
+            break
+
+    #if newPageHtml != pageHtml and (url not in vulnList):
+    #    vulnList.append(url)
+
+    titleAfterInjection = driver.title
+
+    # if the title changed, the website is vulnerable
+    if titleBeforeInjection != titleAfterInjection:
+        if url not in vulnList:
+            vulnList.append(url)
+
+    if automatic == False:
+        #wait for input before closing
+        input("Press enter to close browser\n")
+
+    if url in vulnList:
+        print(f"{url} -- VULNERABLE")
+    else:
+        print(f"{url} -- POSSIBLY SAFE")
+
+    driver.close()
+    driver.quit()
     return
 
-# returns tuple two lists, (vulnerable, notVulnerable)
+# returns a list of vulnerable websites
 def InjectAllAutomatic(short:bool=True) -> 'list[str]':
     domains = getCookies.GetDomainList(short=short)
 
@@ -104,10 +147,11 @@ def InjectAllAutomatic(short:bool=True) -> 'list[str]':
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print("PLEASE PROVIDE THE DOMAIN YOU WANT TO VISIT")
+        site = input("Domain you want to visit as <example.com>\n>")
+        InjectCookiesToDomain(site)
     else:
         if sys.argv[1] == 'all':
-            vuln, notVuln = InjectAllAutomatic(short = False)
+            vuln = InjectAllAutomatic(short = False)
             print(f"Vulnerable: {vuln}")
         elif sys.argv[1] == 'some':
             vuln = InjectAllAutomatic(short = True)
