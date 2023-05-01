@@ -16,7 +16,7 @@ def InjectCookiesToDomain(domain:str, automatic:bool=False, vulnList:'list[str]'
     # URL to open in new window, assume https and .com
     cookies = getCookies.GetCookies(domain)
 
-    vulnerable = False
+    vulnReason = ""
 
     if len(cookies) == 0:
         print(f"No Cookies for: {domain}")
@@ -89,11 +89,10 @@ def InjectCookiesToDomain(domain:str, automatic:bool=False, vulnList:'list[str]'
     newPageHtml = str(driver.page_source)
     newPageHtml = newPageHtml.lower()
 
-    loginStrs = ["signup", "sign up", "login", "log in"]
+    loginStrs = ["signup", "sign up", "login", "log in", "signin", "sign in"]
     for login in loginStrs:
         if login in pageHtml and login not in newPageHtml:
-            if url not in vulnList:
-                vulnList.append(url)
+            vulnReason += f" -- {login} changed"
             break
 
     #if newPageHtml != pageHtml and (url not in vulnList):
@@ -103,17 +102,19 @@ def InjectCookiesToDomain(domain:str, automatic:bool=False, vulnList:'list[str]'
 
     # if the title changed, the website is vulnerable
     if titleBeforeInjection != titleAfterInjection:
-        if url not in vulnList:
-            vulnList.append(url)
+        vulnReason += f" -- Title changed (redirect)"
+
+    if vulnReason != "":
+        print(f"{url} -- VULNERABLE")
+        if f'{url}{vulnReason}' not in vulnList:
+            vulnList.append(f"{url}{vulnReason}")
+    else:
+        print(f"{url} -- POSSIBLY SAFE")
+
 
     if automatic == False:
         #wait for input before closing
         input("Press enter to close browser\n")
-
-    if url in vulnList:
-        print(f"{url} -- VULNERABLE")
-    else:
-        print(f"{url} -- POSSIBLY SAFE")
 
     driver.close()
     driver.quit()
@@ -160,12 +161,11 @@ def InjectAllAutomatic(short:bool=True, file:str=None) -> 'list[str]':
     return vulnList
 
 if __name__ == '__main__':
+    vuln = []
     if len(sys.argv) < 2:
         site = input("Domain you want to visit as <example.com>\n>")
-        InjectCookiesToDomain(site)
+        InjectCookiesToDomain(site, vulnList=vuln)
     else:
-        vuln = []
-        printVuln = True
         if sys.argv[1] == 'all':
             vuln = InjectAllAutomatic(short = False)
             print(f"Vulnerable: {vuln}")
@@ -176,7 +176,6 @@ if __name__ == '__main__':
             assert len(sys.argv) >= 3
             vuln = InjectAllAutomatic(file=sys.argv[2])
         else:
-            printVuln = False
-            InjectCookiesToDomain(sys.argv[1])
-        print("Vulnerable Sites: \n" + '\n'.join(vuln))
+            InjectCookiesToDomain(sys.argv[1], vulnList=vuln)
+    print("Vulnerable Sites: \n" + '\n'.join(vuln))
 
