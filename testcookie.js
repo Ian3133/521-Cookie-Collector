@@ -1,5 +1,6 @@
 const https = require('https');
 const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs')
 
 function printList(list) {
     for (let i=0; i<list.length; i++) {
@@ -20,8 +21,12 @@ function sendCookies(domain, cookies) {
         console.log('Status: ' + res.statusCode);
         console.log('Headers: ' + JSON.stringify(res.headers));
         res.setEncoding('utf8');
+        fs.writeFileSync('out.html', '')
         res.on('data', function (chunk) {
-            console.log('Body: ' + chunk);
+            fs.appendFileSync('out.html', chunk, (err) => {
+                if (err) throw err;
+            });
+            //console.log('Body: ' + chunk);
             //if body contains the term "redirect", then you're logged in
         });
     });
@@ -41,7 +46,7 @@ let db = new sqlite3.Database('./Cookies', sqlite3.OPEN_READONLY, (err) => {
 });
 
 let cookies = [];
-let query = `SELECT * FROM cookies WHERE host_key LIKE '%piazza%'`;
+let query = `SELECT * FROM cookies WHERE host_key LIKE '%reddit%'`;
 
 db.serialize(() => {
     db.each(query, (err, row) => {
@@ -52,7 +57,8 @@ db.serialize(() => {
     });
 });
 
-sendCookies('piazza.com', cookies);
+//printList(cookies)
+sendCookies('www.reddit.com', cookies);
 
 db.close((err) => {
     if (err) {
