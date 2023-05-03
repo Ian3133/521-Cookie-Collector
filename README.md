@@ -22,6 +22,4 @@ This script is a JavaScript code that can be executed in the browser console of 
 ### `openChromeAndCopyJS.py`
 
 This Python script uses the selenium package to automate the process of collecting cookies from a website. The script launches an instance of the Google Chrome web browser and navigates to the desired website. It then executes a JavaScript file that retrieves the cookies from the current session in the Chrome web browser and returns them as a list of dictionaries. The script iterates through the cookie data and prints the name and value of each cookie. Finally, the script closes the Chrome web browser and exits.
-=======
 
-Main
